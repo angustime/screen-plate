@@ -308,6 +308,8 @@
       remove.textContent = '刪除';
       remove.setAttribute('aria-label', `刪除名稱 ${index + 1}`);
       remove.addEventListener('click', () => {
+        const current = input.value.trim();
+        if (current && !confirm(`確定刪除名稱「${current}」？\n（按「儲存」後才會真正寫入雲端）`)) return;
         const rest = draft();
         rest.splice(index, 1);
         renderNames(rest, Math.min(index, rest.length - 1));
