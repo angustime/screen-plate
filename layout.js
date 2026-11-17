@@ -104,9 +104,32 @@ window.PlateLayout = (() => {
     return loading;
   }
 
-  async function exportTotal(records) {
+  // 每個系列在「最後一筆有名稱的那一頁」之後，保證還有兩整頁空白編號供紙本手寫；
+  // 原本就有足夠空白編號（例如原表空白、空號）時不再多產生。
+  function withBlankPages(records, next) {
+    const capacity = 2 * Math.floor(PAPER.budget / ROW_HEIGHT);
+    const prefix = { '一般': '', '中': '中', '大': '大' };
+    const out = [];
+    for (const series of ['一般', '中', '大']) {
+      const group = records.filter(r => r.series === series);
+      let lastNamed = -1;
+      group.forEach((r, i) => { if (r.names.length) lastNamed = i; });
+      const wanted = (Math.floor(Math.max(lastNamed, 0) / capacity) + 3) * capacity;
+      const rows = group.slice();
+      let sort = next && next[series] ? Number(next[series].slice(prefix[series].length))
+        : group.reduce((m, r) => Math.max(m, r.sort), 0) + 1;
+      while (rows.length < wanted) {
+        rows.push({ number: prefix[series] + String(sort).padStart(3, '0'), series, sort, names: [], count: 0, status: '' });
+        sort++;
+      }
+      out.push(...rows);
+    }
+    return out;
+  }
+
+  async function exportTotal(records, next) {
     await loadExcelJS();
-    const pages = preparePages(records);
+    const pages = preparePages(withBlankPages(records, next));
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('總表', { views: [{ showGridLines: false }] });
     const widths = [PAPER.numberWidth, PAPER.nameWidth, PAPER.nameWidth, PAPER.nameWidth, 2.5,

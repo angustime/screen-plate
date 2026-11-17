@@ -373,7 +373,7 @@
     button.textContent = '產生中…';
     try {
       await refresh(true);
-      const { blob } = await PlateLayout.exportTotal(data.records);
+      const { blob } = await PlateLayout.exportTotal(data.records, data.next);
       const stamp = new Date().toLocaleDateString('sv-SE');
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
