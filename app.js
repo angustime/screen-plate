@@ -93,8 +93,8 @@
     $('who').textContent = label || '';
     $('open-new').hidden = !isEditor();
     $('download').hidden = !isEditor();
-    $('show-deleted-wrap').hidden = !isEditor();
     $('open-accounts').hidden = role !== 'owner';
+    $('open-history').hidden = role !== 'owner';
   }
 
   function showApp() {
@@ -155,7 +155,7 @@
     const fragment = document.createDocumentFragment();
     for (const { record } of results) {
       const row = document.createElement('tr');
-      const editable = isEditor() && !record.archived && record.status !== '空號待新建';
+      const editable = isEditor() && record.status !== '空號待新建';
       const code = cell(row, editable ? '' : record.number, 'code');
       if (editable) {
         const button = document.createElement('button');
@@ -188,22 +188,9 @@
       cell(row, record.count === null ? '待核對' : `${record.count} 個`, 'name-count');
       const statusCell = cell(row);
       const badge = document.createElement('span');
-      if (record.archived) {
-        badge.className = 'status deleted';
-        badge.textContent = '已刪除';
-        statusCell.append(badge);
-        const undo = document.createElement('button');
-        undo.type = 'button';
-        undo.className = 'restore-btn';
-        undo.textContent = '復原';
-        undo.addEventListener('click', event => { event.stopPropagation(); restore(record.number, undo); });
-        statusCell.append(undo);
-        row.classList.add('is-deleted');
-      } else {
-        badge.className = 'status' + (record.status === '待核對' ? ' pending' : record.status === '已登錄' ? '' : ' vacant');
-        badge.textContent = record.status;
-        statusCell.append(badge);
-      }
+      badge.className = 'status' + (record.status === '待核對' ? ' pending' : record.status === '已登錄' ? '' : ' vacant');
+      badge.textContent = record.status;
+      statusCell.append(badge);
       fragment.append(row);
     }
     $('rows').replaceChildren(fragment);
@@ -213,10 +200,8 @@
     const term = normalize($('search').value.trim());
     const series = document.querySelector('input[name=series]:checked').value;
     const count = document.querySelector('input[name=count]:checked').value;
-    const showDeleted = $('show-deleted').checked;
     const number = /^([中大]?)([0-9]+)$/.exec(term);
     const results = indexed.flatMap(record => {
-      if (record.archived !== undefined && record.archived && !showDeleted) return [];
       if ((series && series !== record.series) || (count && Number(count) !== record.count)) return [];
       const priority = rank(record, term, number);
       return priority >= 0 ? [{ record, priority }] : [];
@@ -239,7 +224,6 @@
   const filtersChanged = () => { page = 1; render(); };
   $('search').addEventListener('input', filtersChanged);
   document.querySelectorAll('.filter').forEach(f => f.addEventListener('change', filtersChanged));
-  $('show-deleted').addEventListener('change', filtersChanged);
   $('reset').addEventListener('click', () => {
     $('search').value = '';
     document.querySelectorAll('.filter input[value=""]').forEach(i => { i.checked = true; });
@@ -250,27 +234,10 @@
   $('next').addEventListener('click', () => { page += 1; render(); window.scrollTo({ top: 0 }); });
 
   /* ───── 提示訊息 ───── */
-  function feedback(message, removed) {
+  function feedback(message) {
     const box = $('feedback');
     box.textContent = message;
     box.hidden = false;
-    if (!removed) return;
-    const undo = document.createElement('button');
-    undo.type = 'button';
-    undo.textContent = '復原';
-    undo.addEventListener('click', () => restore(removed, undo));
-    box.append(undo);
-  }
-
-  async function restore(number, button) {
-    button.disabled = true;
-    try {
-      setData(await api('restore', { number }), number);
-      feedback(`${number} 已復原。`);
-    } catch (problem) {
-      feedback(problem.message);
-      button.disabled = false;
-    }
   }
 
   /* ───── 新增／編輯視窗 ───── */
@@ -287,7 +254,7 @@
   function choices() {
     const series = $('edit-series').value;
     const next = data.next[series];
-    const reserved = data.records.filter(r => r.series === series && r.status === '空號待新建' && !r.archived);
+    const reserved = data.records.filter(r => r.series === series && r.status === '空號待新建');
     $('edit-number').replaceChildren(new Option(`${next}（下一個新號）`, next),
       ...reserved.map(r => new Option(`${r.number}（已核准空號）`, r.number)));
   }
@@ -348,7 +315,7 @@
 
   function openEditor(action, target = '') {
     if (dialog.open || !isEditor()) return;
-    selected = action === 'edit' ? data.records.find(r => r.number === target && !r.archived) : null;
+    selected = action === 'edit' ? data.records.find(r => r.number === target) : null;
     if (action === 'edit' && !selected) return;
     mode = action;
     $('edit-title').textContent = mode === 'new' ? '新增網版' : '編輯網版';
@@ -376,8 +343,8 @@
     try {
       const res = await api(action, { number: target, series: $('edit-series').value, before: selected?.names, names: draft().map(n => n.trim()) });
       dialog.close();
-      setData(res, target);
-      feedback(action === 'delete' ? `${target} 已刪除。` : `${target} 已儲存到雲端。`, action === 'delete' ? target : undefined);
+      setData(res, action === 'delete' ? '' : target);
+      feedback(action === 'delete' ? `${target} 已刪除。` : `${target} 已儲存到雲端。`);
     } catch (problem) {
       showEditError(problem.message);
       if (problem.code === 'conflict') refresh(true);
@@ -414,8 +381,7 @@
     button.textContent = '產生中…';
     try {
       await refresh(true);
-      const records = data.records.filter(r => !r.archived);
-      const { blob } = await PlateLayout.exportTotal(records);
+      const { blob } = await PlateLayout.exportTotal(data.records);
       const stamp = new Date().toLocaleDateString('sv-SE');
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -520,6 +486,66 @@
     }
   });
   $('accounts-close').addEventListener('click', () => accountsDialog.close());
+
+  /* ───── 歷史異動記錄（總管理員） ───── */
+  const historyDialog = $('history-dialog');
+  let history = [], historyAction = '', historyShown = 50;
+  const namesText = list => (list && list.length ? list.join('、') : '（無名稱）');
+
+  function renderHistory() {
+    const term = normalize($('history-search').value.trim());
+    const rows = history.filter(h => (!historyAction || h.action === historyAction) &&
+      (!term || normalize([h.number, h.by, ...(h.before || []), ...(h.after || [])].join(' ')).includes(term)));
+    $('history-count').textContent = rows.length ? `共 ${numberFormat.format(rows.length)} 筆（最新的在最上面）` : '沒有符合的記錄。';
+    $('history-list').replaceChildren(...rows.slice(0, historyShown).map(h => {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      const top = document.createElement('div');
+      top.className = 'history-top';
+      const tag = document.createElement('span');
+      tag.className = 'history-tag ' + ({ '新增': 'add', '修改': 'edit', '刪除': 'del' }[h.action] || '');
+      tag.textContent = h.action;
+      const num = document.createElement('strong');
+      num.textContent = h.number;
+      const meta = document.createElement('span');
+      meta.className = 'history-meta';
+      meta.textContent = `${h.at}・${h.by}`;
+      top.append(tag, num, meta);
+      const detail = document.createElement('div');
+      detail.className = 'history-detail';
+      if (h.action === '新增') detail.textContent = `名稱：${namesText(h.after)}`;
+      else if (h.action === '刪除') detail.textContent = `刪除前：${namesText(h.before)}`;
+      else detail.textContent = `${namesText(h.before)}　→　${namesText(h.after)}`;
+      item.append(top, detail);
+      return item;
+    }));
+    $('history-more').hidden = rows.length <= historyShown;
+  }
+
+  $('open-history').addEventListener('click', async () => {
+    history = [];
+    historyShown = 50;
+    $('history-list').textContent = '讀取中…';
+    $('history-count').textContent = '';
+    historyDialog.showModal();
+    try {
+      history = (await api('history')).history;
+      renderHistory();
+    } catch (problem) {
+      $('history-list').textContent = problem.message;
+    }
+  });
+  $('history-search').addEventListener('input', () => { historyShown = 50; renderHistory(); });
+  $('history-filter').addEventListener('click', event => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    historyAction = button.dataset.action;
+    $('history-filter').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === button));
+    historyShown = 50;
+    renderHistory();
+  });
+  $('history-more').addEventListener('click', () => { historyShown += 50; renderHistory(); });
+  $('history-close').addEventListener('click', () => historyDialog.close());
 
   /* ───── 啟動 ───── */
   if (!token) {

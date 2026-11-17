@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
   <header class="masthead">
@@ -21,6 +21,7 @@
       <h1 class="company">正新奇美<span>網版編號查詢</span></h1>
       <div class="header-tools" id="header-tools" hidden>
         <span id="who"></span>
+        <button id="open-history" type="button" hidden>異動記錄</button>
         <button id="open-accounts" type="button" hidden>帳號密碼</button>
         <button id="download" type="button" hidden><span aria-hidden="true">↓</span> 匯出 Excel 總表</button>
         <button id="logout" type="button">登出</button>
@@ -65,7 +66,6 @@
           <button id="open-new" type="button" hidden>新增網版</button>
         </div>
       </div>
-      <label class="show-deleted" id="show-deleted-wrap" hidden><input type="checkbox" id="show-deleted"> 顯示已刪除的網版（可復原）</label>
     </section>
     <p class="feedback" id="feedback" role="status" hidden></p>
     <section class="results" aria-label="查詢結果">
@@ -113,7 +113,7 @@
       </div>
       <p id="edit-error" role="alert" hidden></p>
       <div id="delete-confirm" hidden>
-        <p>確定刪除整片網版及其名稱？（之後可在「顯示已刪除」中復原，編號不會再被發出）</p>
+        <p>確定刪除整片網版及其名稱？刪除後無法復原，這個編號也不會再被發出。</p>
         <button id="delete-keep" type="button">保留網版</button>
         <button id="delete-apply" type="button">確認刪除</button>
       </div>
@@ -135,8 +135,24 @@
     </div>
   </dialog>
 
+  <dialog id="history-dialog">
+    <div class="history-box">
+      <h2>歷史異動記錄</h2>
+      <input id="history-search" type="search" placeholder="搜尋編號、名稱或操作者" autocomplete="off">
+      <div class="history-filter" id="history-filter">
+        <button type="button" data-action="" class="on">全部</button>
+        <button type="button" data-action="新增">新增</button>
+        <button type="button" data-action="修改">修改</button>
+        <button type="button" data-action="刪除">刪除</button>
+      </div>
+      <p id="history-count" class="hint"></p>
+      <div id="history-list"></div>
+      <div class="dialog-buttons"><button id="history-more" type="button" hidden>顯示更多</button><button id="history-close" type="button">關閉</button></div>
+    </div>
+  </dialog>
+
   <script src="config.js?v=1"></script>
   <script src="layout.js?v=1"></script>
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

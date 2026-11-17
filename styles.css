@@ -159,3 +159,17 @@ th{font-size:.95rem}
 .name-count{font-size:1rem}
 #matches{font-size:.95rem}
 .sync-note,.show-deleted{font-size:.88rem}
+#history-dialog{width:min(96vw,640px)}
+#history-search{display:block;width:100%;border:1px solid #a6bcb4;border-radius:8px;padding:11px 12px;font:inherit;margin-top:6px}
+.history-filter{display:flex;gap:6px;margin:10px 0 0;flex-wrap:wrap}
+.history-filter button{background:#fff;border:1px solid var(--line);border-radius:7px;padding:8px 14px;font-weight:650;color:#35514d}
+.history-filter button.on{background:var(--soft);border-color:#91c2ad;color:#135043}
+.history-item{border-top:1px solid var(--line);padding:11px 0}
+.history-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.history-top strong{font-size:1.1rem}
+.history-tag{font-size:.82rem;font-weight:700;padding:3px 8px;border-radius:5px;background:#eceff0;color:#3e5156}
+.history-tag.add{background:#e5f1eb;color:#1f5a46}
+.history-tag.edit{background:#e6eef8;color:#294d7a}
+.history-tag.del{background:#f6e3df;color:#7d2f25}
+.history-meta{color:var(--muted);font-size:.85rem;margin-left:auto}
+.history-detail{margin-top:5px;color:#29443f;white-space:pre-wrap;overflow-wrap:anywhere}
