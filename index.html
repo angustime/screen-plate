@@ -105,20 +105,13 @@
       <div class="name-head"><strong>名稱</strong><span id="name-limit"></span></div>
       <div id="edit-names"></div>
       <button id="add-name" type="button">＋ 新增名稱</button>
-      <p id="empty-note" hidden>這筆原表空白尚未核准，不能加入名稱。</p>
       <div id="print-preview" hidden>
         <label>紙本單格預覽</label>
         <div class="print-scroll"><div id="print-grid"></div></div>
         <p id="size-warning" hidden>有名稱會縮到 10 pt 以下，請確認紙本可讀性。</p>
       </div>
       <p id="edit-error" role="alert" hidden></p>
-      <div id="delete-confirm" hidden>
-        <p>確定刪除整片網版及其名稱？刪除後無法復原，這個編號也不會再被發出。</p>
-        <button id="delete-keep" type="button">保留網版</button>
-        <button id="delete-apply" type="button">確認刪除</button>
-      </div>
       <div class="dialog-buttons">
-        <button id="edit-delete" type="button" hidden>刪除整片</button>
         <button id="edit-cancel" type="button">取消</button><button id="edit-save" type="submit" disabled>儲存</button>
       </div>
     </form>
@@ -143,7 +136,6 @@
         <button type="button" data-action="" class="on">全部</button>
         <button type="button" data-action="新增">新增</button>
         <button type="button" data-action="修改">修改</button>
-        <button type="button" data-action="刪除">刪除</button>
       </div>
       <p id="history-count" class="hint"></p>
       <div id="history-list"></div>
@@ -153,6 +145,6 @@
 
   <script src="config.js?v=1"></script>
   <script src="layout.js?v=1"></script>
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

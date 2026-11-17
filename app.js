@@ -155,7 +155,7 @@
     const fragment = document.createDocumentFragment();
     for (const { record } of results) {
       const row = document.createElement('tr');
-      const editable = isEditor() && record.status !== '空號待新建';
+      const editable = isEditor();
       const code = cell(row, editable ? '' : record.number, 'code');
       if (editable) {
         const button = document.createElement('button');
@@ -244,7 +244,6 @@
   const dialog = $('edit-dialog');
   let mode = 'new', selected = null, busy = false;
   const draft = () => Array.from($('edit-names').querySelectorAll('textarea'), i => i.value);
-  const blocked = () => selected?.status === '原表空白';
 
   function showEditError(message) {
     $('edit-error').textContent = message;
@@ -254,9 +253,9 @@
   function choices() {
     const series = $('edit-series').value;
     const next = data.next[series];
-    const reserved = data.records.filter(r => r.series === series && r.status === '空號待新建');
+    const blanks = data.records.filter(r => r.series === series && !r.names.length);
     $('edit-number').replaceChildren(new Option(`${next}（下一個新號）`, next),
-      ...reserved.map(r => new Option(`${r.number}（已核准空號）`, r.number)));
+      ...blanks.map(r => new Option(`${r.number}（空白編號）`, r.number)));
   }
 
   function renderNames(names, focusIndex) {
@@ -285,14 +284,13 @@
       return row;
     }));
     $('name-limit').textContent = `${names.length} / 3`;
-    $('add-name').disabled = names.length >= 3 || blocked();
+    $('add-name').disabled = names.length >= 3;
     if (focusIndex !== undefined) ($('edit-names').querySelectorAll('textarea')[focusIndex] || $('add-name')).focus();
     update();
   }
 
   function valid(names) {
     if (names.length > 3 || names.some(n => !n.trim())) return false;
-    if (blocked() && names.length) return false;
     return mode === 'new' ? names.length > 0 : JSON.stringify(names.map(n => n.trim())) !== JSON.stringify(selected.names);
   }
 
@@ -321,9 +319,6 @@
     $('edit-title').textContent = mode === 'new' ? '新增網版' : '編輯網版';
     $('edit-new').hidden = mode !== 'new';
     $('edit-existing').hidden = mode !== 'edit';
-    $('edit-delete').hidden = mode !== 'edit';
-    $('empty-note').hidden = !blocked();
-    $('delete-confirm').hidden = true;
     $('edit-code').value = target;
     showEditError('');
     choices();
@@ -338,13 +333,12 @@
     $('edit-save').disabled = true;
     $('edit-save').textContent = '儲存中…';
     $('edit-cancel').disabled = true;
-    $('delete-apply').disabled = true;
     const target = action === 'new' ? $('edit-number').value : selected.number;
     try {
       const res = await api(action, { number: target, series: $('edit-series').value, before: selected?.names, names: draft().map(n => n.trim()) });
       dialog.close();
-      setData(res, action === 'delete' ? '' : target);
-      feedback(action === 'delete' ? `${target} 已刪除。` : `${target} 已儲存到雲端。`);
+      setData(res, target);
+      feedback(`${target} 已儲存到雲端。`);
     } catch (problem) {
       showEditError(problem.message);
       if (problem.code === 'conflict') refresh(true);
@@ -352,16 +346,12 @@
       busy = false;
       $('edit-save').textContent = '儲存';
       $('edit-cancel').disabled = false;
-      $('delete-apply').disabled = false;
       if (dialog.open) update();
     }
   }
 
   $('open-new').addEventListener('click', () => openEditor('new'));
   $('edit-cancel').addEventListener('click', () => dialog.close());
-  $('edit-delete').addEventListener('click', () => { $('delete-confirm').hidden = false; $('delete-keep').focus(); });
-  $('delete-keep').addEventListener('click', () => { $('delete-confirm').hidden = true; });
-  $('delete-apply').addEventListener('click', () => persist('delete'));
   $('edit-series').addEventListener('change', () => { choices(); update(); });
   $('add-name').addEventListener('click', () => {
     const names = draft();
