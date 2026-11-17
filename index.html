@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>網版編號查詢｜正新奇美</title>
+  <meta name="theme-color" content="#123936">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="網版查詢">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <h1 class="company">正新奇美<span>網版編號查詢</span></h1>
+      <div class="header-tools" id="header-tools" hidden>
+        <span id="who"></span>
+        <button id="open-accounts" type="button" hidden>帳號密碼</button>
+        <button id="download" type="button" hidden><span aria-hidden="true">↓</span> 匯出 Excel 總表</button>
+        <button id="logout" type="button">登出</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="login-view" hidden>
+    <form id="login-form" class="login-card">
+      <h2>請輸入密碼</h2>
+      <p class="hint">輸入公司提供的密碼即可，系統會自動辨識權限。登入後此裝置會一直記住。</p>
+      <input id="login-password" type="password" autocomplete="current-password" placeholder="密碼" required>
+      <button id="login-submit" type="submit">登入</button>
+      <p id="login-error" role="alert" hidden></p>
+    </form>
+  </main>
+
+  <main id="app-view" hidden>
+    <section class="controls" aria-label="查詢條件">
+      <label for="search" class="search-label">搜尋編號或名稱</label>
+      <div class="search-box">
+        <span class="search-icon" aria-hidden="true"></span>
+        <input id="search" type="search" placeholder="例如 960、中001、愛渡假" autocomplete="off">
+      </div>
+      <div class="filter-bar">
+        <fieldset class="filter">
+          <legend>系列</legend>
+          <label><input type="radio" name="series" value="" checked><span>全部</span></label>
+          <label><input type="radio" name="series" value="一般"><span>一般</span></label>
+          <label><input type="radio" name="series" value="中"><span>中版</span></label>
+          <label><input type="radio" name="series" value="大"><span>大版</span></label>
+        </fieldset>
+        <fieldset class="filter">
+          <legend>名稱數</legend>
+          <label><input type="radio" name="count" value="" checked><span>不限</span></label>
+          <label><input type="radio" name="count" value="1"><span>1 個</span></label>
+          <label><input type="radio" name="count" value="2"><span>2 個</span></label>
+          <label><input type="radio" name="count" value="3"><span>3 個</span></label>
+        </fieldset>
+        <div class="filter-actions">
+          <button id="reset" type="button">清除條件</button>
+          <button id="open-new" type="button" hidden>新增網版</button>
+        </div>
+      </div>
+      <label class="show-deleted" id="show-deleted-wrap" hidden><input type="checkbox" id="show-deleted"> 顯示已刪除的網版（可復原）</label>
+    </section>
+    <p class="feedback" id="feedback" role="status" hidden></p>
+    <section class="results" aria-label="查詢結果">
+      <div class="result-header">
+        <h2>查詢結果</h2>
+        <p id="matches" role="status" aria-live="polite"></p>
+      </div>
+      <div id="result-table">
+        <table>
+          <thead><tr><th scope="col">網版編號</th><th scope="col">現有名稱</th><th scope="col">名稱數</th><th scope="col">狀態</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="pager" aria-label="分頁">
+          <button id="prev" type="button">上一頁</button>
+          <span id="page-info"></span>
+          <button id="next" type="button">下一頁</button>
+        </div>
+      </div>
+      <p id="empty" hidden>找不到符合條件的網版。</p>
+      <p id="sync-note" class="sync-note"></p>
+    </section>
+  </main>
+
+  <dialog id="edit-dialog">
+    <form id="edit-form">
+      <h2 id="edit-title"></h2>
+      <div id="edit-new" hidden>
+        <label for="edit-series">系列</label>
+        <select id="edit-series"><option value="一般">一般版</option><option value="中">中版</option><option value="大">大版</option></select>
+        <label for="edit-number">選擇編號</label>
+        <select id="edit-number"></select>
+      </div>
+      <div id="edit-existing" hidden>
+        <label for="edit-code">網版編號</label>
+        <input id="edit-code" readonly>
+      </div>
+      <div class="name-head"><strong>名稱</strong><span id="name-limit"></span></div>
+      <div id="edit-names"></div>
+      <button id="add-name" type="button">＋ 新增名稱</button>
+      <p id="empty-note" hidden>這筆原表空白尚未核准，不能加入名稱。</p>
+      <div id="print-preview" hidden>
+        <label>紙本單格預覽</label>
+        <div class="print-scroll"><div id="print-grid"></div></div>
+        <p id="size-warning" hidden>有名稱會縮到 10 pt 以下，請確認紙本可讀性。</p>
+      </div>
+      <p id="edit-error" role="alert" hidden></p>
+      <div id="delete-confirm" hidden>
+        <p>確定刪除整片網版及其名稱？（之後可在「顯示已刪除」中復原，編號不會再被發出）</p>
+        <button id="delete-keep" type="button">保留網版</button>
+        <button id="delete-apply" type="button">確認刪除</button>
+      </div>
+      <div class="dialog-buttons">
+        <button id="edit-delete" type="button" hidden>刪除整片</button>
+        <button id="edit-cancel" type="button">取消</button><button id="edit-save" type="submit" disabled>儲存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="accounts-dialog">
+    <div class="accounts-box">
+      <h2>帳號密碼管理</h2>
+      <p class="hint">每個角色一組密碼，且各組不可相同。更改密碼後，使用舊密碼登入的裝置會被登出；移除管理員會立即登出該管理員。</p>
+      <div id="accounts-list"></div>
+      <p id="accounts-error" role="alert" hidden></p>
+      <p id="accounts-backup" class="hint"></p>
+      <div class="dialog-buttons"><button id="accounts-close" type="button">關閉</button></div>
+    </div>
+  </dialog>
+
+  <script src="config.js?v=1"></script>
+  <script src="layout.js?v=1"></script>
+  <script src="app.js?v=1"></script>
+</body>
+</html>
