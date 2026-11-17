@@ -187,3 +187,11 @@ th{font-size:.95rem}
   #who{font-size:13px;padding:3px 9px}
   .header-tools{justify-content:flex-end}
 }
+/* ── 第二排四個功能鈕：同樣式、平均分配寬度（角色看不到的鈕不顯示，其餘鈕維持同寬靠右） ── */
+.header-tools{display:flex;flex-wrap:nowrap;gap:8px;justify-content:flex-end;width:100%}
+.header-tools button,.header-tools #download{flex:0 0 calc((100% - 24px) / 4);max-width:150px;background:transparent;color:#e6f4ee;border:1px solid #6d9e8f;border-radius:8px;padding:9px 4px;font-size:15px;font-weight:650;text-align:center;white-space:nowrap}
+.header-tools button:hover{background:#1d4a46}
+@media(max-width:620px){
+  .header-tools button,.header-tools #download{max-width:none;font-size:14px;padding:8px 2px}
+}
+.header-tools{padding:0}

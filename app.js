@@ -466,7 +466,7 @@
     $('toggle-pw').textContent = showPw ? '隱藏密碼' : '顯示密碼';
     document.querySelectorAll('.pw-value').forEach(el => {
       const pw = el.dataset.pw;
-      el.textContent = !pw ? '（設定於此功能之前，無法顯示，重設一次即可）' : showPw ? pw : '●'.repeat(Math.min(pw.length, 12));
+      el.textContent = !pw ? '（此密碼在加入顯示功能前設定，系統沒有留存原文。請在下方輸入原本的密碼再按「更改密碼」，之後就會一直顯示）' : showPw ? pw : '●'.repeat(Math.min(pw.length, 12));
       el.classList.toggle('muted', !pw);
     });
   }
