@@ -173,3 +173,17 @@ th{font-size:.95rem}
 .history-tag.del{background:#f6e3df;color:#7d2f25}
 .history-meta{color:var(--muted);font-size:.85rem;margin-left:auto}
 .history-detail{margin-top:5px;color:#29443f;white-space:pre-wrap;overflow-wrap:anywhere}
+/* ── 上方綠色區：第一排標題＋身分，第二排功能鈕 ── */
+.masthead-inner{flex-direction:column;align-items:stretch;justify-content:center;gap:8px;padding-block:12px}
+.masthead-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#who{color:#e6f4ee;font-size:15px;font-weight:650;white-space:nowrap;border:1px solid #6d9e8f;border-radius:20px;padding:4px 12px}
+.header-tools{justify-content:flex-end}
+.toggle-pw{background:#fff;border:1px solid #719a8d;color:#194a40;border-radius:7px;padding:8px 14px;font-weight:680;margin-bottom:4px}
+.current-pw{font-size:.92rem;color:#32524b;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.pw-value{font-family:Consolas,"Microsoft JhengHei",monospace;font-size:1rem;background:#f3f6f4;border:1px solid var(--line);border-radius:5px;padding:2px 8px;letter-spacing:.04em}
+.pw-value.muted{font-family:inherit;font-size:.84rem;color:var(--muted);letter-spacing:0}
+@media(max-width:620px){
+  .masthead-inner{padding-block:10px;gap:8px}
+  #who{font-size:13px;padding:3px 9px}
+  .header-tools{justify-content:flex-end}
+}

@@ -43,6 +43,7 @@
   function showLogin(message) {
     $('app-view').hidden = true;
     $('header-tools').hidden = true;
+    $('who').hidden = true;
     $('login-view').hidden = false;
     $('login-error').hidden = !message;
     $('login-error').textContent = message || '';
@@ -101,6 +102,7 @@
     $('login-view').hidden = true;
     $('app-view').hidden = false;
     $('header-tools').hidden = false;
+    $('who').hidden = false;
   }
 
   /* ───── 資料同步 ───── */
@@ -405,6 +407,17 @@
       state.textContent = acc.set ? '已設定' : '未設定';
       head.append(title, state);
       form.append(head);
+      if (acc.set) {
+        const current = document.createElement('div');
+        current.className = 'current-pw';
+        const label = document.createElement('span');
+        label.textContent = '目前密碼：';
+        const value = document.createElement('code');
+        value.className = 'pw-value';
+        value.dataset.pw = acc.password;
+        current.append(label, value);
+        form.append(current);
+      }
       const isManager = acc.account.startsWith('manager');
       let labelInput;
       if (isManager) {
@@ -445,7 +458,19 @@
       });
       return form;
     }));
+    applyPwVisibility();
   }
+
+  let showPw = false;
+  function applyPwVisibility() {
+    $('toggle-pw').textContent = showPw ? '隱藏密碼' : '顯示密碼';
+    document.querySelectorAll('.pw-value').forEach(el => {
+      const pw = el.dataset.pw;
+      el.textContent = !pw ? '（設定於此功能之前，無法顯示，重設一次即可）' : showPw ? pw : '●'.repeat(Math.min(pw.length, 12));
+      el.classList.toggle('muted', !pw);
+    });
+  }
+  $('toggle-pw').addEventListener('click', () => { showPw = !showPw; applyPwVisibility(); });
 
   async function accountCall(action, payload, button) {
     button.disabled = true;
@@ -463,6 +488,7 @@
   }
 
   $('open-accounts').addEventListener('click', async () => {
+    showPw = false;
     $('accounts-list').textContent = '讀取中…';
     $('accounts-error').hidden = true;
     $('accounts-backup').textContent = '';
